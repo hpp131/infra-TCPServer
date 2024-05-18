@@ -23,12 +23,26 @@ func NewServer(name string) *Server {
 	}
 }
 
+// Connection中的handle成员
+func CallBackHandl(conn *net.TCPConn, data []byte, length int) error {
+	contentBytes, err := conn.Write(data)
+	if err != nil {
+		fmt.Println("write error: ", err)
+		return err
+	}
+	fmt.Printf("Back Write data successs, data length is %d\n", contentBytes)
+	return nil
+}
+
 // 实现 ziface.IServer interface
 
 func (s *Server) Start() {
 	// 不阻塞当前goroutine
 	go func() {
 		addr := fmt.Sprintf("%s:%s", s.IP, strconv.Itoa(s.Port))
+
+		// network: "tcp | tcp6"
+		// address: "ip:port"
 		tcpAddr, err := net.ResolveTCPAddr(s.IPVersion, addr)
 		if err != nil {
 			panic(err)
@@ -45,34 +59,15 @@ func (s *Server) Start() {
 			if err != nil {
 				panic(err)
 			}
-
-			// One conn, One goroutine
-			go func() {
-				defer conn.Close()
-				for {
-					buf := make([]byte, 512)
-					content, err := conn.Read(buf)
-					if err != nil {
-						fmt.Println("recv buf err", err)
-						break
-					}
-					// 使用回显作为tcp返回
-					_, err = conn.Write(buf[:content])
-					if err != nil {
-						fmt.Println("write back buf err ", err)
-						break
-					}else {
-						fmt.Printf("Server端回写成功, content is %s\n", string(buf))
-					}
-				}
-			}()
+			var cid uint32
+			c := NewConnection(conn, cid, CallBackHandl)
+			cid++
+			go c.Start()
 		}
 	}()
-
 }
 func (s *Server) Stop() {
 	fmt.Println("[STOP] tcp server , name " , s.Name)
-
 }
 
 func (s *Server) Serve() {
