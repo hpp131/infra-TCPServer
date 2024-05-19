@@ -34,7 +34,6 @@ func CallBackHandl(conn *net.TCPConn, data []byte, length int) error {
 	return nil
 }
 
-
 // 实现 ziface.IServer interface
 
 func (s *Server) Start() {
