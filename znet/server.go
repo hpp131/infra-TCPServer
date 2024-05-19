@@ -5,13 +5,46 @@ import (
 	"net"
 	"strconv"
 	"time"
+	"tcpserver/ziface"
 )
+
+// 继承BaseRouter
+type PingRouter struct {
+	BaseRouter
+}
+
+// 根据需要重写BaseRouter的方法
+func (pr *PingRouter) PreHandle(request ziface.IRequest)  {
+	fmt.Println("Call Router PreHandle...")
+	_, err := request.GetConnection().GetTCPConnection().Write([]byte("Before handle"))
+	if err != nil {
+		fmt.Println("Call Router PreHandle Failed!!!")
+	}
+}
+
+func (pr *PingRouter) Handle(request ziface.IRequest)  {
+	fmt.Println("Call Router Handle...")
+	_, err := request.GetConnection().GetTCPConnection().Write([]byte("Handling"))
+	if err != nil {
+		fmt.Println("Call Router Handle Failed!!!")
+	}
+}
+
+func (pr *PingRouter) PostHandle(request ziface.IRequest)  {
+	fmt.Println("Call Router PostHandle...")
+	_, err := request.GetConnection().GetTCPConnection().Write([]byte("After handling"))
+	if err != nil {
+		fmt.Println("Call Router PostHandle Failed!!!")
+	}
+}
+
 
 type Server struct {
 	Name      string
 	IPVersion string
 	IP        string
 	Port      int
+	Router   ziface.IRouter
 }
 
 func NewServer(name string) *Server {
@@ -20,6 +53,7 @@ func NewServer(name string) *Server {
 		IPVersion: "tcp4",
 		IP:        "0.0.0.0",
 		Port:      8999,
+		Router: nil,
 	}
 }
 
@@ -33,6 +67,7 @@ func CallBackHandl(conn *net.TCPConn, data []byte, length int) error {
 	fmt.Printf("Back Write data successs, data length is %d\n", contentBytes)
 	return nil
 }
+
 
 // 实现 ziface.IServer interface
 
@@ -60,7 +95,7 @@ func (s *Server) Start() {
 				panic(err)
 			}
 			var cid uint32
-			c := NewConnection(conn, cid, CallBackHandl)
+			c := NewConnection(conn, cid, s.Router)
 			cid++
 			go c.Start()
 		}
@@ -75,4 +110,10 @@ func (s *Server) Serve() {
 	for {
         time.Sleep(10*time.Second)
     }
+}
+
+// Why??????
+func (s *Server) AddRouter(router ziface.IRouter)  {
+	// TODO
+	s.Router = router
 }

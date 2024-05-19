@@ -3,5 +3,6 @@ package ziface
 type Server interface {
 	Start()
 	Stop()
-	Serve()	
+	Serve()
+	AddRouter(router IRouter)
 }

@@ -11,17 +11,19 @@ type Connection struct {
 	ConnID      uint32
 	IsClosed    bool
 	// 处理该connection的功能函数
-	Handle      ziface.HandleFunc
+	// Handle      ziface.HandleFunc
+	// 使用Router处理业务，而不是将Handle固定在Connection中
+	Router  ziface.IRouter
 	ExitBufChan chan bool
 }
 
-func  NewConnection(conn *net.TCPConn, connID uint32, handle ziface.HandleFunc) *Connection {
+func  NewConnection(conn *net.TCPConn, connID uint32, router ziface.IRouter) *Connection {
 	return &Connection{
 		ExitBufChan: make(chan bool),
 		Conn: conn,
 		IsClosed: false,
 		ConnID: connID,
-		Handle: handle,
+		Router:   router,
 	}
 }
 
@@ -40,14 +42,17 @@ func (c *Connection) startReader()  {
 			c.ExitBufChan <- true
 			continue
 		}
-		// 调用与当前connection绑定的handle
-		err = c.Handle(c.Conn, readBuf[:contentBytes], contentBytes)
-		if err != nil {
-			fmt.Println("ConnID", c.ConnID, "handle exec error")
-			c.ExitBufChan <- true
-			return
+		req := &Request{
+			Conn: c,
+			Data: readBuf[:contentBytes],
 		}
 		
+
+		go func(){
+			c.Router.PreHandle(req)
+			c.Router.Handle(req)
+			c.Router.PostHandle(req)
+		}()
 	}
 }
 
