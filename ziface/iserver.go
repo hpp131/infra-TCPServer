@@ -1,6 +1,6 @@
 package ziface
 
-type Server interface {
+type IServer interface {
 	Start()
 	Stop()
 	Serve()

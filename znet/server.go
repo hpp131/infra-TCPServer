@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 	"tcpserver/ziface"
+	"tcpserver/util"
 )
 
 // 继承BaseRouter
@@ -49,10 +50,10 @@ type Server struct {
 
 func NewServer(name string) *Server {
 	return &Server{
-		Name:      name,
+		Name:      util.Globalobject.Name,
 		IPVersion: "tcp4",
-		IP:        "0.0.0.0",
-		Port:      8999,
+		IP:        util.Globalobject.Host,
+		Port:      int(util.Globalobject.TCPPort),
 		Router: nil,
 	}
 }
@@ -72,6 +73,8 @@ func CallBackHandl(conn *net.TCPConn, data []byte, length int) error {
 // 实现 ziface.IServer interface
 
 func (s *Server) Start() {
+	fmt.Println("Server version:", util.Globalobject.Version)
+	fmt.Println("Listen Port:", util.Globalobject.TCPPort)
 	// 不阻塞当前goroutine
 	go func() {
 		addr := fmt.Sprintf("%s:%s", s.IP, strconv.Itoa(s.Port))
@@ -112,7 +115,6 @@ func (s *Server) Serve() {
     }
 }
 
-// Why??????
 func (s *Server) AddRouter(router ziface.IRouter)  {
 	// TODO
 	s.Router = router
