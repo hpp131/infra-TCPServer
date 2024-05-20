@@ -7,30 +7,30 @@ import (
 )
 
 type Connection struct {
-	Conn        *net.TCPConn
-	ConnID      uint32
-	IsClosed    bool
+	Conn     *net.TCPConn
+	ConnID   uint32
+	IsClosed bool
 	// 处理该connection的功能函数
 	// Handle      ziface.HandleFunc
 	// 使用Router处理业务，而不是将Handle固定在Connection中
-	Router  ziface.IRouter
+	Router      ziface.IRouter
 	ExitBufChan chan bool
 }
 
-func  NewConnection(conn *net.TCPConn, connID uint32, router ziface.IRouter) *Connection {
+func NewConnection(conn *net.TCPConn, connID uint32, router ziface.IRouter) *Connection {
 	return &Connection{
 		ExitBufChan: make(chan bool),
-		Conn: conn,
-		IsClosed: false,
-		ConnID: connID,
-		Router:   router,
+		Conn:        conn,
+		IsClosed:    false,
+		ConnID:      connID,
+		Router:      router,
 	}
 }
 
 // implement ziface.IConnection
 
 // 从conn读数据
-func (c *Connection) startReader()  {
+func (c *Connection) startReader() {
 	fmt.Println("Read Goroutine is running")
 	defer fmt.Printf("Terninating connectin with remoteaddr: %s\n", c.GetRemoteAddr().String())
 	defer c.Stop()
@@ -46,16 +46,14 @@ func (c *Connection) startReader()  {
 			Conn: c,
 			Data: readBuf[:contentBytes],
 		}
-		
 
-		go func(){
+		go func() {
 			c.Router.PreHandle(req)
 			c.Router.Handle(req)
 			c.Router.PostHandle(req)
 		}()
 	}
 }
-
 
 func (c *Connection) Start() {
 	go c.startReader()
@@ -69,12 +67,12 @@ func (c *Connection) Start() {
 	}
 }
 
-func (c *Connection) Stop()  {
+func (c *Connection) Stop() {
 	if c.IsClosed {
 		return
 	}
 	c.IsClosed = true
-	if err := c.Conn.Close();err != nil{
+	if err := c.Conn.Close(); err != nil {
 		fmt.Println("ConnID", c.ConnID, "close error")
 		return
 	}
@@ -92,11 +90,10 @@ func (c *Connection) GetConnID() uint32 {
 	return c.ConnID
 }
 
-
-// type Addr interface {
-// 	Network() string // name of the network (for example, "tcp", "udp")
-// 	String() string  // string form of address (for example, "192.0.2.1:25", "[2001:db8::1]:80")
-// }
+//	type Addr interface {
+//		Network() string // name of the network (for example, "tcp", "udp")
+//		String() string  // string form of address (for example, "192.0.2.1:25", "[2001:db8::1]:80")
+//	}
 func (c *Connection) GetRemoteAddr() net.Addr {
 	return c.Conn.RemoteAddr()
 }
