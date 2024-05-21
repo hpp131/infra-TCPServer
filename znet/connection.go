@@ -14,17 +14,17 @@ type Connection struct {
 	// 处理该connection的功能函数
 	// Handle      ziface.HandleFunc
 	// 使用Router处理业务，而不是将Handle固定在Connection中
-	Router      ziface.IRouter
+	MsgHandler      ziface.IMsgHandler
 	ExitBufChan chan bool
 }
 
-func NewConnection(conn *net.TCPConn, connID uint32, router ziface.IRouter) *Connection {
+func NewConnection(conn *net.TCPConn, connID uint32, router ziface.IMsgHandler) *Connection {
 	return &Connection{
 		ExitBufChan: make(chan bool),
 		Conn:        conn,
 		IsClosed:    false,
 		ConnID:      connID,
-		Router:      router,
+		MsgHandler:   router,
 	}
 }
 
@@ -69,11 +69,7 @@ func (c *Connection) startReader() {
 			Conn: c,
 			Data: msg,
 		}
-		go func() {
-			c.Router.PreHandle(req)
-			c.Router.Handle(req)
-			c.Router.PostHandle(req)
-		}()
+		go c.MsgHandler.DoMsgHandle(req)
 	}
 }
 

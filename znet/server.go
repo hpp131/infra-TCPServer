@@ -48,7 +48,9 @@ type Server struct {
 	IPVersion string
 	IP        string
 	Port      int
-	Router   ziface.IRouter
+	// Router   ziface.IRouter
+	// 使用MsgHandler代替Router实现多路由
+	MsgHandler ziface.IMsgHandler
 }
 
 func NewServer(name string) *Server {
@@ -57,7 +59,7 @@ func NewServer(name string) *Server {
 		IPVersion: "tcp4",
 		IP:        util.Globalobject.Host,
 		Port:      int(util.Globalobject.TCPPort),
-		Router: nil,
+		MsgHandler: NewMsgHandle(),
 	}
 }
 
@@ -101,7 +103,7 @@ func (s *Server) Start() {
 				panic(err)
 			}
 			var cid uint32
-			c := NewConnection(conn, cid, s.Router)
+			c := NewConnection(conn, cid, s.MsgHandler)
 			cid++
 			go c.Start()
 		}
@@ -119,7 +121,6 @@ func (s *Server) Serve() {
     }
 }
 
-func (s *Server) AddRouter(router ziface.IRouter)  {
-	// TODO
-	s.Router = router
+func (s *Server) AddRouter(MsgID uint32, router ziface.IRouter)  {
+	s.MsgHandler.AddRouter(MsgID, router)
 }
