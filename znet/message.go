@@ -1,10 +1,10 @@
 package znet
 
-func NewMessage(data []byte, mesID, len uint32) *Message {
+func NewMessage(data []byte, id uint32) *Message {
 	return &Message{
 		Data: data,
-		MsgID: mesID,
-		Len: len,
+		MsgID: id,
+		Len: uint32(len(data)),
 	}
 }
 

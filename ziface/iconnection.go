@@ -9,6 +9,8 @@ type IConnection interface {
 	GetTCPConnection() *net.TCPConn
 	GetConnID() uint32
 	GetRemoteAddr() net.Addr
+	// 添加封包方法,发送Message被封包后的数据[]byte
+	SendMsg(data []byte, id uint32) error
 }
 
 type HandleFunc func(*net.TCPConn, []byte, int) error

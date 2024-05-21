@@ -16,26 +16,29 @@ type PingRouter struct {
 
 // 根据需要重写BaseRouter的方法
 func (pr *PingRouter) PreHandle(request ziface.IRequest)  {
+	fmt.Printf("PreHandle Request, MsgID %d\n", request.GetMsgID())
 	fmt.Println("Call Router PreHandle...")
-	_, err := request.GetConnection().GetTCPConnection().Write([]byte("Before handle"))
+	err := request.GetConnection().SendMsg([]byte("Before handle"), request.GetMsgID())
 	if err != nil {
-		fmt.Println("Call Router PreHandle Failed!!!")
+		fmt.Println("Call Router PreHandle error", err)
 	}
 }
 
 func (pr *PingRouter) Handle(request ziface.IRequest)  {
+	fmt.Printf("Handle Request, MsgID %d\n", request.GetMsgID())
 	fmt.Println("Call Router Handle...")
-	_, err := request.GetConnection().GetTCPConnection().Write([]byte("Handling"))
+	err := request.GetConnection().SendMsg([]byte("handling"), request.GetMsgID())
 	if err != nil {
-		fmt.Println("Call Router Handle Failed!!!")
+		fmt.Println("Call Router Handle error", err)
 	}
 }
 
 func (pr *PingRouter) PostHandle(request ziface.IRequest)  {
+	fmt.Printf("PostHandle Request, MsgID %d\n", request.GetMsgID())
 	fmt.Println("Call Router PostHandle...")
-	_, err := request.GetConnection().GetTCPConnection().Write([]byte("After handling"))
+	err := request.GetConnection().SendMsg([]byte("PostHandle"), request.GetMsgID())
 	if err != nil {
-		fmt.Println("Call Router PostHandle Failed!!!")
+		fmt.Println("Call Router PostHandle error", err)
 	}
 }
 
@@ -58,16 +61,16 @@ func NewServer(name string) *Server {
 	}
 }
 
-// Connection中的handle成员
-func CallBackHandl(conn *net.TCPConn, data []byte, length int) error {
-	contentBytes, err := conn.Write(data)
-	if err != nil {
-		fmt.Println("write error: ", err)
-		return err
-	}
-	fmt.Printf("Back Write data successs, data length is %d\n", contentBytes)
-	return nil
-}
+// // Connection中的handle成员
+// func CallBackHandl(conn *net.TCPConn, data []byte, length int) error {
+// 	contentBytes, err := conn.Write(data)
+// 	if err != nil {
+// 		fmt.Println("write error: ", err)
+// 		return err
+// 	}
+// 	fmt.Printf("Back Write data successs, data length is %d\n", contentBytes)
+// 	return nil
+// }
 
 
 // 实现 ziface.IServer interface
@@ -106,6 +109,7 @@ func (s *Server) Start() {
 }
 func (s *Server) Stop() {
 	fmt.Println("[STOP] tcp server , name " , s.Name)
+	
 }
 
 func (s *Server) Serve() {

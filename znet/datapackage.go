@@ -2,13 +2,14 @@ package znet
 
 /*
 该模块意在解决TCP粘包问题，通过在应用程序中规范Message实体，并且实现拆包和解包逻辑来解决粘包问题
-
+核心功能是实现封包和解包(Pack, Unpack)
 */
 
 import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"tcpserver/util"
 	"tcpserver/ziface"
 )
@@ -55,6 +56,7 @@ func (dp *DataPackage) Unpack(data []byte) (ziface.IMessage, error) {
 		return nil, err
 	}
 	if util.Globalobject.MaxPackageSize > 0 && msg.Len > util.Globalobject.MaxPackageSize {
+		fmt.Printf("MaxPackageSize %d, msg.Len %d", util.Globalobject.MaxPackageSize, msg.Len)
 		return nil, errors.New("message is too large")
 	}
 	return msg, nil
