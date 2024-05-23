@@ -80,6 +80,9 @@ func NewServer(name string) *Server {
 func (s *Server) Start() {
 	fmt.Println("Server version:", util.Globalobject.Version)
 	fmt.Println("Listen Port:", util.Globalobject.TCPPort)
+	
+	// 开启WorkerPool
+	s.MsgHandler.StartWorkerPool()
 	// 不阻塞当前goroutine
 	go func() {
 		addr := fmt.Sprintf("%s:%s", s.IP, strconv.Itoa(s.Port))

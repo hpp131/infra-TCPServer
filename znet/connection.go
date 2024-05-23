@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"tcpserver/util"
 	"tcpserver/ziface"
-
 )
 
 type Connection struct {
@@ -34,7 +34,8 @@ func NewConnection(conn *net.TCPConn, connID uint32, router ziface.IMsgHandler) 
 
 // Implement ziface.IConnection
 
-// 从conn读数据，即read goroutine
+// 1. 从conn读数据，即read goroutine
+// 2. 将拆包后的数据组装成Request, 然后发送到任务队列中/开一个临时的goroutine直接handle
 func (c *Connection) startReader() {
 	fmt.Println("Read Goroutine is running")
 	defer fmt.Printf("Terninating connectin with remoteaddr: %s\n", c.GetRemoteAddr().String())
@@ -73,22 +74,27 @@ func (c *Connection) startReader() {
 			Conn: c,
 			Data: msg,
 		}
-		go c.MsgHandler.DoMsgHandle(req)
+
+		if util.Globalobject.WorkPoolSize > 0 {
+			c.MsgHandler.SendTaskToQueue(req)
+		} else {
+			go c.MsgHandler.DoMsgHandle(req)
+		}
 	}
 }
 
-// 向conn写数据,即write goroutine
+// 向conn写入业务逻辑处理之后的结果（即write goroutine）。不负责处理业务逻辑
 func (c *Connection) startWriter() {
 	fmt.Println("Write Goroutine is Running...")
 	for {
 		select {
-		case data := <- c.MsgChan:
+		case data := <-c.MsgChan:
 			_, err := c.Conn.Write(data)
 			if err != nil {
 				fmt.Println("Send data error", err)
 				return
 			}
-		case <- c.ExitBufChan:
+		case <-c.ExitBufChan:
 			fmt.Println("Connection has already been closed, Exiting to Write Goroutine...")
 			return
 		}
