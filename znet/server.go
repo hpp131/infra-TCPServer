@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"time"
-	"tcpserver/ziface"
 	"tcpserver/util"
+	"tcpserver/ziface"
+	"time"
 )
 
 // 继承BaseRouter
@@ -52,6 +52,8 @@ type Server struct {
 	// 使用MsgHandler代替Router实现多路由
 	MsgHandler ziface.IMsgHandler
 	ConnManage  ziface.IConnManager
+	StartHook ziface.Hook
+	StopHook ziface.Hook
 }
 
 func NewServer(name string) *Server {
@@ -137,4 +139,20 @@ func (s *Server) AddRouter(MsgID uint32, router ziface.IRouter)  {
 
 func (s *Server) GetConnManage() ziface.IConnManager {
 	return s.ConnManage
+}
+
+func (s *Server) SetStartHook(in ziface.Hook)  {
+	s.StartHook = in
+}
+
+func (s *Server) SetStopHook(in ziface.Hook)  {
+	s.StopHook = in
+}
+
+func (s *Server) CallStartHook(in ziface.IConnection)  {
+	s.StartHook(in)
+}
+
+func (s *Server) CallStopHook(in ziface.IConnection)  {
+	s.StopHook(in)
 }

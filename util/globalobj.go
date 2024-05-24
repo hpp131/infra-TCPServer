@@ -16,6 +16,7 @@ func init() {
 		TCPPort:        8999,
 		MaxWorkTaskLen: 1024,
 		WorkPoolSize:   10,
+		MaxBufBytes:    4096,
 	}
 	Globalobject.Load()
 }
@@ -32,6 +33,7 @@ type GlobalObj struct {
 	WorkPoolSize   uint32
 	// 每个worker所消费的TaskQueue的最大长度
 	MaxWorkTaskLen uint32
+	MaxBufBytes    int
 }
 
 var Globalobject *GlobalObj
