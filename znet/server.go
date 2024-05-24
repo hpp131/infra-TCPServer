@@ -51,6 +51,7 @@ type Server struct {
 	// Router   ziface.IRouter
 	// 使用MsgHandler代替Router实现多路由
 	MsgHandler ziface.IMsgHandler
+	ConnManage  ziface.IConnManager
 }
 
 func NewServer(name string) *Server {
@@ -60,6 +61,7 @@ func NewServer(name string) *Server {
 		IP:        util.Globalobject.Host,
 		Port:      int(util.Globalobject.TCPPort),
 		MsgHandler: NewMsgHandle(),
+		ConnManage: NewConnManage(),
 	}
 }
 
@@ -80,7 +82,7 @@ func NewServer(name string) *Server {
 func (s *Server) Start() {
 	fmt.Println("Server version:", util.Globalobject.Version)
 	fmt.Println("Listen Port:", util.Globalobject.TCPPort)
-	
+
 	// 开启WorkerPool
 	s.MsgHandler.StartWorkerPool()
 	// 不阻塞当前goroutine
@@ -106,7 +108,12 @@ func (s *Server) Start() {
 				panic(err)
 			}
 			var cid uint32
-			c := NewConnection(conn, cid, s.MsgHandler)
+			// 创建连接前先判断当前server端的连接数是否达到配置的最大数量
+			if s.ConnManage.Len() > util.Globalobject.MaxConn {
+				conn.Close()
+				continue
+			}
+			c := NewConnection(s, conn, cid, s.MsgHandler)
 			cid++
 			go c.Start()
 		}
@@ -114,7 +121,7 @@ func (s *Server) Start() {
 }
 func (s *Server) Stop() {
 	fmt.Println("[STOP] tcp server , name " , s.Name)
-	
+	s.ConnManage.ClearAll()	
 }
 
 func (s *Server) Serve() {
@@ -126,4 +133,8 @@ func (s *Server) Serve() {
 
 func (s *Server) AddRouter(MsgID uint32, router ziface.IRouter)  {
 	s.MsgHandler.AddRouter(MsgID, router)
+}
+
+func (s *Server) GetConnManage() ziface.IConnManager {
+	return s.ConnManage
 }

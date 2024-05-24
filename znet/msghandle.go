@@ -45,7 +45,7 @@ func (mh *MsgHandle) AddRouter(msgID uint32, router ziface.IRouter) {
 }
 
 func (mh *MsgHandle) StartOneWorker(workID int, taskQueue chan ziface.IRequest)  {
-	
+
 	// 该worker负责消费该taskQueue
 	for {
 		select {
@@ -59,7 +59,7 @@ func (mh *MsgHandle) StartOneWorker(workID int, taskQueue chan ziface.IRequest) 
 func (mh *MsgHandle) StartWorkerPool()  {
 	for i:=0;i<int(util.Globalobject.WorkPoolSize);i++ {
 		mh.TaskQueue[i] = make(chan ziface.IRequest, util.Globalobject.MaxWorkTaskLen)
-		// 一次性启动全部goroutine
+		// 一次性启动全部goroutine，在后台常驻处理Task
 		go mh.StartOneWorker(i, mh.TaskQueue[i])
 	}
 }

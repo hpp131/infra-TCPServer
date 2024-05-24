@@ -9,6 +9,7 @@ import (
 )
 
 type Connection struct {
+	Server   ziface.IServer
 	Conn     *net.TCPConn
 	ConnID   uint32
 	IsClosed bool
@@ -21,8 +22,9 @@ type Connection struct {
 	MsgChan chan []byte
 }
 
-func NewConnection(conn *net.TCPConn, connID uint32, router ziface.IMsgHandler) *Connection {
-	return &Connection{
+func NewConnection(server ziface.IServer, conn *net.TCPConn, connID uint32, router ziface.IMsgHandler) *Connection {
+	res := &Connection{
+		Server:      server,
 		ExitBufChan: make(chan bool),
 		Conn:        conn,
 		IsClosed:    false,
@@ -30,6 +32,9 @@ func NewConnection(conn *net.TCPConn, connID uint32, router ziface.IMsgHandler) 
 		MsgHandler:  router,
 		MsgChan:     make(chan []byte),
 	}
+	// 创建连接的时候把该链接添加到ConnManage中
+	server.GetConnManage().AddConn(res)
+	return res
 }
 
 // Implement ziface.IConnection
@@ -124,6 +129,7 @@ func (c *Connection) Stop() {
 		fmt.Println("ConnID", c.ConnID, "close error")
 		return
 	}
+	c.Server.GetConnManage().DeleteConn(c)
 	c.ExitBufChan <- true
 	// channel资源回收
 	close(c.ExitBufChan)
