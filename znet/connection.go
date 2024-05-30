@@ -8,7 +8,6 @@ import (
 	"tcpserver/util"
 	"tcpserver/ziface"
 
-	"golang.org/x/tools/go/analysis/passes/defers"
 )
 
 type Connection struct {
