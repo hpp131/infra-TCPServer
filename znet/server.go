@@ -67,20 +67,8 @@ func NewServer(name string) *Server {
 	}
 }
 
-// // Connection中的handle成员
-// func CallBackHandl(conn *net.TCPConn, data []byte, length int) error {
-// 	contentBytes, err := conn.Write(data)
-// 	if err != nil {
-// 		fmt.Println("write error: ", err)
-// 		return err
-// 	}
-// 	fmt.Printf("Back Write data successs, data length is %d\n", contentBytes)
-// 	return nil
-// }
-
 
 // 实现 ziface.IServer interface
-
 func (s *Server) Start() {
 	fmt.Println("Server version:", util.Globalobject.Version)
 	fmt.Println("Listen Port:", util.Globalobject.TCPPort)

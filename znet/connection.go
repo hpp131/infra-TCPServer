@@ -29,14 +29,14 @@ type Connection struct {
 	PropertyLock sync.RWMutex
 }
 
-func NewConnection(server ziface.IServer, conn *net.TCPConn, connID uint32, router ziface.IMsgHandler) *Connection {
+func NewConnection(server ziface.IServer, conn *net.TCPConn, connID uint32, mh ziface.IMsgHandler) *Connection {
 	res := &Connection{
 		Server:      server,
 		ExitBufChan: make(chan bool),
 		Conn:        conn,
 		IsClosed:    false,
 		ConnID:      connID,
-		MsgHandler:  router,
+		MsgHandler:  mh,
 		MsgChan:     make(chan []byte),
 		MsgBuffChan: make(chan []byte, util.Globalobject.MaxBufBytes),
 		Property: make(map[string]any),
@@ -65,7 +65,7 @@ func (c *Connection) startReader() {
 		}
 
 		// 解包操作
-		// 获取head数据(msgLen, msgID)
+		// 获取head数据(msgLen, msgID), 封装成Message
 		msg, err := dp.Unpack(headBuf)
 		if err != nil {
 			fmt.Println("TCP Unpack error:", err)
@@ -83,7 +83,7 @@ func (c *Connection) startReader() {
 			}
 		}
 		msg.SetData(body)
-
+		// 进一步封装成Request
 		req := &Request{
 			Conn: c,
 			Data: msg,

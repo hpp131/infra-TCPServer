@@ -65,6 +65,7 @@ func (mh *MsgHandle) StartWorkerPool()  {
 }
 
 
+// 这里使用hash的方式对Connection做计算得到服务于该链接的Worker编号，由该worker处理该链接上的请求数据
 func (mh *MsgHandle) SendTaskToQueue(request ziface.IRequest)  {
 	workID := request.GetConnection().GetConnID() % util.Globalobject.WorkPoolSize
 	mh.TaskQueue[workID] <- request

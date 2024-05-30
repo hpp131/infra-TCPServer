@@ -6,15 +6,6 @@ import (
 	"tcpserver/ziface"
 )
 
-// AddConn(conn IConnection)
-// DeleteConn()
-// GetConn(connID uint32) IConnection
-// // 获取所有链接的数量
-// Len()
-// // 清理所有链接
-// ClearAll()
-
-
 
 type ConnManage struct {
 	lock    sync.RWMutex
