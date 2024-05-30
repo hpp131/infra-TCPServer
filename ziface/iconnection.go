@@ -11,7 +11,10 @@ type IConnection interface {
 	GetRemoteAddr() net.Addr
 	// 添加封包方法,发送Message被封包后的数据[]byte
 	SendMsg(data []byte, id uint32) error
-	SendBufMsg(data []byte, id uint32) error	
+	SendBufMsg(data []byte, id uint32) error
+	SetProperty(key string, value any)
+	GetProperty(key string) (any, error)
+	RemoveProperty(key string)
 }
 
 type HandleFunc func(*net.TCPConn, []byte, int) error

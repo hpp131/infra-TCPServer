@@ -4,8 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"sync"
 	"tcpserver/util"
 	"tcpserver/ziface"
+
+	"golang.org/x/tools/go/analysis/passes/defers"
 )
 
 type Connection struct {
@@ -22,6 +25,9 @@ type Connection struct {
 	MsgChan chan []byte
 	// 与上面的chan作用相同，但是带有缓冲
 	MsgBuffChan chan []byte
+	// 用于链接属性设置
+	Property     map[string]any
+	PropertyLock sync.RWMutex
 }
 
 func NewConnection(server ziface.IServer, conn *net.TCPConn, connID uint32, router ziface.IMsgHandler) *Connection {
@@ -34,6 +40,7 @@ func NewConnection(server ziface.IServer, conn *net.TCPConn, connID uint32, rout
 		MsgHandler:  router,
 		MsgChan:     make(chan []byte),
 		MsgBuffChan: make(chan []byte, util.Globalobject.MaxBufBytes),
+		Property: make(map[string]any),
 	}
 	// 创建连接的时候把该链接添加到ConnManage中
 	server.GetConnManage().AddConn(res)
@@ -102,14 +109,14 @@ func (c *Connection) startWriter() {
 				fmt.Println("Send data error", err)
 				return
 			}
-		case dataBuf, ok := <- c.MsgBuffChan:
+		case dataBuf, ok := <-c.MsgBuffChan:
 			if ok {
 				_, err := c.Conn.Write(dataBuf)
 				if err != nil {
 					fmt.Println("Send data error", err)
 					return
 				}
-			}else {
+			} else {
 				fmt.Println("msgBuffChan is Closed")
 				break
 			}
@@ -185,7 +192,6 @@ func (c *Connection) SendMsg(data []byte, id uint32) error {
 	return nil
 }
 
-
 func (c *Connection) SendBufMsg(data []byte, id uint32) error {
 	// Message -> []bytes
 	msg := NewMessage(data, id)
@@ -198,4 +204,26 @@ func (c *Connection) SendBufMsg(data []byte, id uint32) error {
 	// 获取到TLV数据后再通过c.MsgChan发送给Write goroutine
 	c.MsgBuffChan <- res
 	return nil
+}
+
+func (c *Connection) SetProperty(key string, value any) {
+	c.PropertyLock.Lock()
+	defer c.PropertyLock.Unlock()
+	c.Property[key] = value
+}
+
+func (c *Connection) GetProperty(key string) (any, error) {
+	c.PropertyLock.RLock()
+	defer  c.PropertyLock.RUnlock()
+	if _, ok := c.Property[key]; !ok {
+		return nil, fmt.Errorf("%s Property not Exist", key)
+	}else {
+		return c.Property[key], nil
+	}
+}
+
+func (c *Connection) RemoveProperty(key string) {
+	c.PropertyLock.Lock()
+	defer c.PropertyLock.Unlock()
+	delete(c.Property, key)
 }
