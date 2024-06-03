@@ -191,6 +191,10 @@ func (c *Connection) SendMsg(data []byte, id uint32) error {
 	return nil
 }
 
+func (c *Connection) GetMsgHandle() ziface.IMsgHandler {
+	return c.MsgHandler
+}
+
 func (c *Connection) SendBufMsg(data []byte, id uint32) error {
 	// Message -> []bytes
 	msg := NewMessage(data, id)

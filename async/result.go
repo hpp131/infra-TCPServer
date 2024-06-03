@@ -2,7 +2,9 @@ package async
 
 // import "google.golang.org/api/books/v1"
 import (
+	"sync/atomic"
 	"tcpserver/ziface"
+	"tcpserver/znet"
 )
 
 // 该对象用于操作异步任务执行结果
@@ -26,18 +28,23 @@ func (ar *AsyncResult) GetAsyncResult() any {
 }
 
 func (ar *AsyncResult) SetAsyncResult(val any) {
-	if ar.hasReslt == 1 {
-		return
+	if atomic.CompareAndSwapUint32(&ar.hasReslt, 0, 1) {
+		ar.resultObj = val
+		ar.DoComplete()
 	}
-	ar.resultObj = val
+	
 }
 
 // 添加回调函数
 func (ar *AsyncResult) OnComplete(f func()) {
-	if ar.hasCallbackFunc == 1 {
+	if atomic.CompareAndSwapUint32(&ar.hasCallbackFunc, 0, 1) {
+		ar.callbackFunc = f
 		return
 	}
-	ar.callbackFunc = f
+	
+	if atomic.LoadUint32(&ar.hasReslt) == 1 {
+		ar.DoComplete()
+	}
 }
 
 // 执行回调函数
@@ -45,5 +52,12 @@ func (ar *AsyncResult) DoComplete() {
 	if ar.callbackFunc == nil {
 		return
 	}
-	ar.callbackFunc()
+
+	if atomic.CompareAndSwapUint32(&ar.hasExecCallbackFunc, 0,1) {
+		request := znet.NewRequestFunc(ar.conn, ar.callbackFunc)
+		// 把回调函数放回原worker goroutine中执行
+		ar.conn.GetMsgHandle().SendTaskToQueue(request)
+		return
+	}
+	
 }
