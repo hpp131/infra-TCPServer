@@ -4,48 +4,50 @@ import (
 	"fmt"
 	"tcpserver/util"
 	"tcpserver/ziface"
+
 )
 
 type MsgHandle struct {
 	// 存储MsgID与Router的映射关系
-	APIs map[uint32]ziface.IRouter
+	// APIs map[uint32]ziface.IRouter
 	// 规范工作goroutine的数量
 	WorkPoolSize uint32
 	// worker从TaskQueue中消费任务
-	TaskQueue    []chan ziface.IRequest
+	TaskQueue   []chan ziface.IRequest
 	RouterSlice *RouterSlices
 }
 
 func NewMsgHandle() *MsgHandle {
 	return &MsgHandle{
-		APIs:         make(map[uint32]ziface.IRouter),
+		// APIs:         make(map[uint32]ziface.IRouter),
 		WorkPoolSize: util.Globalobject.MaxPackageSize,
 		// 为每一个Worker分配一个TaskQueue
-		TaskQueue: make([]chan ziface.IRequest, util.Globalobject.WorkPoolSize),
+		TaskQueue:   make([]chan ziface.IRequest, util.Globalobject.WorkPoolSize),
 		RouterSlice: NewRouterSlices(),
 	}
 }
 
+// 执行异步任务的回调函数
+func (mh *MsgHandle) DoFuncHandle(f ziface.IFuncHandle) {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("panic happended:", err)
+		}
+	}()
+	f.CallFunc()
+}
+
+
+// 执行前置中间件并执行业务路由
 func (mh *MsgHandle) DoMsgHandle(request ziface.IRequest) {
-
-	router, ok := mh.APIs[request.GetMsgID()]
+	handlers, ok := mh.RouterSlice.GetHandler(request.GetMsgID())
 	if !ok {
-		fmt.Println("DoMsgHandle error : Unknow MsgID")
-		return
+		fmt.Println("GetHandler failed")
 	}
-
-	router.PreHandle(request)
-	router.Handle(request)
-	router.PostHandle(request)
+	request.BindRouterSlice(handlers)
+	// 执行中间件在内的所有handle函数
+	request.ExecRouteHandlerNext()
 }
-
-func (mh *MsgHandle) AddRouter(msgID uint32, router ziface.IRouter) {
-	if _, ok := mh.APIs[msgID]; !ok {
-		fmt.Printf("AddRouter error, MsgID %d already exist\n", msgID)
-	}
-	mh.APIs[msgID] = router
-}
-
 
 
 /*
@@ -70,14 +72,20 @@ func (mh *MsgHandle) Group(start, end uint32, handlers ...ziface.RouterHandler) 
 	return mh.RouterSlice.Group(start, end, handlers...)
 }
 
-
 func (mh *MsgHandle) StartOneWorker(workID int, taskQueue chan ziface.IRequest) {
 
 	// 该worker负责消费该taskQueue
 	for {
 		select {
 		case req := <-taskQueue:
-			mh.DoMsgHandle(req)
+			switch typ := req.(type){
+			case ziface.IFuncHandle:
+				mh.DoFuncHandle(typ)
+			case ziface.IRequest:
+				mh.DoMsgHandle(typ)
+			}
+
+			
 		}
 	}
 }

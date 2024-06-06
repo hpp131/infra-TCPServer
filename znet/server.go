@@ -9,40 +9,6 @@ import (
 	"time"
 )
 
-// 继承BaseRouter
-type PingRouter struct {
-	BaseRouter
-}
-
-// 根据需要重写BaseRouter的方法
-func (pr *PingRouter) PreHandle(request ziface.IRequest)  {
-	fmt.Printf("PreHandle Request, MsgID %d\n", request.GetMsgID())
-	fmt.Println("Call Router PreHandle...")
-	err := request.GetConnection().SendMsg([]byte("Before handle"), request.GetMsgID())
-	if err != nil {
-		fmt.Println("Call Router PreHandle error", err)
-	}
-}
-
-func (pr *PingRouter) Handle(request ziface.IRequest)  {
-	fmt.Printf("Handle Request, MsgID %d\n", request.GetMsgID())
-	fmt.Println("Call Router Handle...")
-	err := request.GetConnection().SendMsg([]byte("handling"), request.GetMsgID())
-	if err != nil {
-		fmt.Println("Call Router Handle error", err)
-	}
-}
-
-func (pr *PingRouter) PostHandle(request ziface.IRequest)  {
-	fmt.Printf("PostHandle Request, MsgID %d\n", request.GetMsgID())
-	fmt.Println("Call Router PostHandle...")
-	err := request.GetConnection().SendMsg([]byte("PostHandle"), request.GetMsgID())
-	if err != nil {
-		fmt.Println("Call Router PostHandle error", err)
-	}
-}
-
-
 type Server struct {
 	Name      string
 	IPVersion string
@@ -121,9 +87,9 @@ func (s *Server) Serve() {
     }
 }
 
-func (s *Server) AddRouter(MsgID uint32, router ziface.IRouter)  {
-	s.MsgHandler.AddRouter(MsgID, router)
-}
+// func (s *Server) AddRouter(MsgID uint32, router ziface.IRouter)  {
+// 	s.MsgHandler.AddRouter(MsgID, router)
+// }
 
 
 /*
