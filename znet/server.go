@@ -125,6 +125,28 @@ func (s *Server) AddRouter(MsgID uint32, router ziface.IRouter)  {
 	s.MsgHandler.AddRouter(MsgID, router)
 }
 
+
+/*
+	以下三个方法为RouterSlice相关:
+
+	AddRouterSlice(msgID uint32, handler ...RouterHandler) IRouterSlice
+	Use(msgID uint32, handlers ...RouterHandler) ziface.IRouterSlice
+	Group(start, end int, rs IRouterSlice, handlers ...RouterHandler) ziface.IGroupRouterSlice
+*/
+
+func (s *Server) AddRouterSlice(msgID uint32, handler ...ziface.RouterHandler) ziface.IRouterSlice {
+	return s.MsgHandler.AddRouterSlice(msgID, handler...)
+}
+
+func (s *Server) Use(msgID uint32, handlers ...ziface.RouterHandler) ziface.IRouterSlice {
+	return s.MsgHandler.Use(msgID, handlers...)
+}
+
+func (s *Server) Group(start, end uint32, handlers ...ziface.RouterHandler) ziface.IGroupRouterSlice {
+	return s.MsgHandler.Group(start, end, handlers...)
+}
+
+
 func (s *Server) GetConnManage() ziface.IConnManager {
 	return s.ConnManage
 }
