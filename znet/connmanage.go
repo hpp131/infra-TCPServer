@@ -23,7 +23,7 @@ func(cm *ConnManage) AddConn(conn ziface.IConnection)  {
 	defer cm.lock.Unlock()
 	id := conn.GetConnID()
 	if _, ok := cm.connSet[id]; ok {
-		fmt.Printf("Current Connection %d Already Exist, Will Not Execute AddConn", id)
+		fmt.Printf("Current Connection %d Already Exist, Will Not Execute AddConn\n", id)
 		return
 	}
 	cm.connSet[id] = conn

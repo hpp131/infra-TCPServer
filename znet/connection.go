@@ -4,10 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 	"sync"
 	"tcpserver/util"
 	"tcpserver/ziface"
+)
 
+const (
+	// 客户端主动断开连接
+	ClientConnTerminal string = "EOF"
 )
 
 type Connection struct {
@@ -39,7 +44,7 @@ func NewConnection(server ziface.IServer, conn *net.TCPConn, connID uint32, mh z
 		MsgHandler:  mh,
 		MsgChan:     make(chan []byte),
 		MsgBuffChan: make(chan []byte, util.Globalobject.MaxBufBytes),
-		Property: make(map[string]any),
+		Property:    make(map[string]any),
 	}
 	// 创建连接的时候把该链接添加到ConnManage中
 	server.GetConnManage().AddConn(res)
@@ -59,9 +64,18 @@ func (c *Connection) startReader() {
 		headBuf := make([]byte, dp.GetHeadLen())
 		_, err := c.Conn.Read(headBuf)
 		if err != nil {
-			fmt.Println("recv buf err", err)
-			c.ExitBufChan <- true
-			continue
+			// 客户端主动/意外断开连接的情况
+			if strings.Contains(err.Error(), ClientConnTerminal) {
+				fmt.Println("Client terninated current connnection")
+				// 连接关闭后，删除connmanage中map[uint32]IConnection的相关k-v
+				c.Server.GetConnManage().DeleteConn(c)
+				c.ExitBufChan <- true
+				continue
+			} else {
+				fmt.Println("recv buf err", err)
+				c.ExitBufChan <- true
+				continue
+			}
 		}
 
 		// 解包操作
@@ -217,10 +231,10 @@ func (c *Connection) SetProperty(key string, value any) {
 
 func (c *Connection) GetProperty(key string) (any, error) {
 	c.PropertyLock.RLock()
-	defer  c.PropertyLock.RUnlock()
+	defer c.PropertyLock.RUnlock()
 	if _, ok := c.Property[key]; !ok {
 		return nil, fmt.Errorf("%s Property not Exist", key)
-	}else {
+	} else {
 		return c.Property[key], nil
 	}
 }
