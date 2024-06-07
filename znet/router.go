@@ -48,7 +48,7 @@ func (rs *RouterSlices) AddHandler(msgID uint32, handler ...ziface.RouterHandler
 	finanSlice := make([]ziface.RouterHandler, finalSize)
 	copy(finanSlice, rs.RH)
 	copy(finanSlice[len(rs.RH):], handler)
-	rs.APIs[msgID] = append(rs.APIs[msgID], handler...)
+	rs.APIs[msgID] = append(rs.APIs[msgID], finanSlice...)
 }
 
 func (rs *RouterSlices) GetHandler(msgID uint32) ([]ziface.RouterHandler, bool) {

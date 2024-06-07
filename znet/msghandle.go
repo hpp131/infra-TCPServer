@@ -63,7 +63,7 @@ func (mh *MsgHandle) AddRouterSlice(msgID uint32, handler ...ziface.RouterHandle
 	return mh.RouterSlice
 }
 
-func (mh *MsgHandle) Use(msgID uint32, handlers ...ziface.RouterHandler) ziface.IRouterSlice {
+func (mh *MsgHandle) Use(handlers ...ziface.RouterHandler) ziface.IRouterSlice {
 	mh.RouterSlice.Use(handlers...)
 	return mh.RouterSlice
 }

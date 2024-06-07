@@ -42,7 +42,7 @@ func (h *HelloRouter) Handle(request  ziface.IRequest)  {
 }
 
 func main() {
-	//创建一个server句柄
+	// 创建一个server句柄
 	s := znet.NewServer("tcpserver")
 	s.SetStartHook(func(conn ziface.IConnection) {
 		fmt.Println("Start Hook Worked...")

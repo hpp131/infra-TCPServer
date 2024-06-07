@@ -104,8 +104,8 @@ func (s *Server) AddRouterSlice(msgID uint32, handler ...ziface.RouterHandler) z
 	return s.MsgHandler.AddRouterSlice(msgID, handler...)
 }
 
-func (s *Server) Use(msgID uint32, handlers ...ziface.RouterHandler) ziface.IRouterSlice {
-	return s.MsgHandler.Use(msgID, handlers...)
+func (s *Server) Use(handlers ...ziface.RouterHandler) ziface.IRouterSlice {
+	return s.MsgHandler.Use(handlers...)
 }
 
 func (s *Server) Group(start, end uint32, handlers ...ziface.RouterHandler) ziface.IGroupRouterSlice {
@@ -126,6 +126,9 @@ func (s *Server) SetStopHook(in ziface.Hook)  {
 }
 
 func (s *Server) CallStartHook(in ziface.IConnection)  {
+	if s.StartHook == nil {
+		return
+	}
 	s.StartHook(in)
 }
 
