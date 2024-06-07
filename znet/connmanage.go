@@ -56,5 +56,5 @@ func (cm *ConnManage) ClearAll()  {
 		conn.Stop()
 		delete(cm.connSet, id)
 	}
-	fmt.Printf("CleaAll Connection Compeltely", cm.Len())
+	fmt.Printf("CleanAll Connection Compeltely", cm.Len())
 }

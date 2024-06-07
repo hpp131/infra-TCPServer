@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"tcpserver/ziface"
 	"tcpserver/znet"
 ) 
@@ -11,8 +10,8 @@ func PingFunc(request ziface.IRequest)  {
 }
 
 func AuthFunc(request ziface.IRequest)  {
-	fmt.Println("Auth... Auth...")
-	// request.GetConnection().SendMsg([]byte("Auth... Auth..."), 1)
+	// fmt.Println("Auth... Auth...")
+	request.GetConnection().SendMsg([]byte("Auth... Auth..."), 1)
 }
 
 

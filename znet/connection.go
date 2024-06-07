@@ -20,8 +20,6 @@ type Connection struct {
 	Conn     *net.TCPConn
 	ConnID   uint32
 	IsClosed bool
-	// 处理该connection的功能函数
-	// Handle      ziface.HandleFunc
 	// 使用Router处理业务，而不是将Handle固定在Connection中
 	MsgHandler  ziface.IMsgHandler
 	ExitBufChan chan bool

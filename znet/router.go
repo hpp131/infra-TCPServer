@@ -62,33 +62,34 @@ func (rs *RouterSlices) GetHandler(msgID uint32) ([]ziface.RouterHandler, bool) 
 	}
 }
 
+// Group的作用仅仅是有一个约束范围即对 [start,end] 范围内的msgID有效
 func (rs *RouterSlices) Group(start, end uint32, handlers ...ziface.RouterHandler) ziface.IGroupRouterSlice {
 	return NewGroupRouter(start, end, rs, handlers...)
 }
 
 type GroupRouter struct {
-	Start, End uint32
-	Handlers   []ziface.RouterHandler
-	Router     ziface.IRouterSlice
+	Start, End  uint32
+	Handlers    []ziface.RouterHandler
+	RouterSlice ziface.IRouterSlice
 }
 
-func NewGroupRouter(start, end uint32, router ziface.IRouterSlice, handler ...ziface.RouterHandler) *GroupRouter {
+func NewGroupRouter(start, end uint32, rs ziface.IRouterSlice, handler ...ziface.RouterHandler) *GroupRouter {
 
-	res :=  &GroupRouter{
-		Start: start,
-		End:   end,
-		Handlers: make([]ziface.RouterHandler, 0, len(handler)),
-		Router: router,
+	res := &GroupRouter{
+		Start:       start,
+		End:         end,
+		Handlers:    make([]ziface.RouterHandler, 0, len(handler)),
+		RouterSlice: rs,
 	}
 	res.Handlers = append(res.Handlers, handler...)
-	return res	
+	return res
 }
 
-func (gr *GroupRouter) Use(handles ...ziface.RouterHandler)  {
+func (gr *GroupRouter) Use(handles ...ziface.RouterHandler) {
 	gr.Handlers = append(gr.Handlers, handles...)
 }
 
-func (gr *GroupRouter) AddHandler(msgID uint32, handler ...ziface.RouterHandler)  {
+func (gr *GroupRouter) AddHandler(msgID uint32, handler ...ziface.RouterHandler) {
 	if msgID < gr.Start || msgID > gr.End {
 		panic("msgID is out of range in current Group")
 	}
@@ -96,8 +97,5 @@ func (gr *GroupRouter) AddHandler(msgID uint32, handler ...ziface.RouterHandler)
 	finalSlice := make([]ziface.RouterHandler, 0, size)
 	copy(finalSlice, gr.Handlers)
 	copy(finalSlice[len(gr.Handlers):], handler)
-	gr.Router.AddHandler(msgID, finalSlice...)
+	gr.RouterSlice.AddHandler(msgID, finalSlice...)
 }
-
-
-

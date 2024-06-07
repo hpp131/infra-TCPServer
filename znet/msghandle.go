@@ -4,13 +4,10 @@ import (
 	"fmt"
 	"tcpserver/util"
 	"tcpserver/ziface"
-
 )
 
 type MsgHandle struct {
-	// 存储MsgID与Router的映射关系
-	// APIs map[uint32]ziface.IRouter
-	// 规范工作goroutine的数量
+	// 规范WorkPool内goroutine的数量
 	WorkPoolSize uint32
 	// worker从TaskQueue中消费任务
 	TaskQueue   []chan ziface.IRequest
@@ -37,7 +34,6 @@ func (mh *MsgHandle) DoFuncHandle(f ziface.IFuncHandle) {
 	f.CallFunc()
 }
 
-
 // 执行前置中间件并执行业务路由
 func (mh *MsgHandle) DoMsgHandle(request ziface.IRequest) {
 	handlers, ok := mh.RouterSlice.GetHandler(request.GetMsgID())
@@ -48,7 +44,6 @@ func (mh *MsgHandle) DoMsgHandle(request ziface.IRequest) {
 	// 执行中间件在内的所有handle函数
 	request.ExecRouteHandlerNext()
 }
-
 
 /*
 	以下三个方法为RouterSlice相关:
@@ -78,14 +73,13 @@ func (mh *MsgHandle) StartOneWorker(workID int, taskQueue chan ziface.IRequest) 
 	for {
 		select {
 		case req := <-taskQueue:
-			switch typ := req.(type){
+			switch typ := req.(type) {
 			case ziface.IFuncHandle:
 				mh.DoFuncHandle(typ)
 			case ziface.IRequest:
 				mh.DoMsgHandle(typ)
 			}
 
-			
 		}
 	}
 }
