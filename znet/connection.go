@@ -96,10 +96,12 @@ func (c *Connection) startReader() {
 		}
 		msg.SetData(body)
 		// 进一步封装成Request
-		req := &Request{
-			Conn: c,
-			Data: msg,
-		}
+		// 使用requestPoolMode替换直接创建Request
+		req := GetRequest(c, msg)
+		// req := &Request{
+		// 	Conn: c,
+		// 	Data: msg,
+		// }
 
 		if util.Globalobject.WorkPoolSize > 0 {
 			c.MsgHandler.SendTaskToQueue(req)

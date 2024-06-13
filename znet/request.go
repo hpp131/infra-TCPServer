@@ -6,6 +6,28 @@ import (
 	"tcpserver/ziface"
 )
 
+var RequestPool = new(sync.Pool)
+
+func init() {
+	RequestPool.New = func() interface{} {
+		return &Request{
+			Index: -1,
+		}
+	}
+}
+
+// 从请求对象池中获取request对象
+func GetRequest(conn ziface.IConnection, msg ziface.IMessage) ziface.IRequest {
+	req := RequestPool.Get().(*Request)
+	req.reset(conn, msg)
+	return req
+}
+
+// 把对象放回到请求对象池中
+func PutRequest(req ziface.IRequest)  {
+	RequestPool.Put(req)
+}
+
 func NewRequest(conn ziface.IConnection, data ziface.IMessage) *Request {
 	return &Request{
 		Conn: conn,
@@ -93,4 +115,11 @@ func (r *Request) Copy() ziface.IRequest {
 		newRequest.Keys[key] = value
 	}
 	return newRequest
+}
+
+
+func (r *Request) reset(conn ziface.IConnection, msg ziface.IMessage) {
+	r.Conn = conn
+	r.Data = msg
+	r.Index = -1
 }

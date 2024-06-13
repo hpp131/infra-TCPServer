@@ -43,6 +43,8 @@ func (mh *MsgHandle) DoMsgHandle(request ziface.IRequest) {
 	request.BindRouterSlice(handlers)
 	// 执行中间件在内的所有handle函数
 	request.ExecRouteHandlerNext()
+	// 处理完成后把request放回到请求对象池中
+	PutRequest(request)
 }
 
 /*
